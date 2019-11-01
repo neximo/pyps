@@ -201,6 +201,7 @@ def run():
     parser.add_argument('--show', '-s', action='store_true', help='Show remote configuration')
     parser.add_argument('--environment', '-e', required=True, type=str, choices=ENRIVONMENTS, help='Environment being updated')
     parser.add_argument('--project', '-p', required=True, type=str, nargs='?', help='Project that config is set to')
+    parser.add_argument('--profile', '-pn', required=True, type=str, nargs='?', help='The name from the profile in aws credentials')
     parser.add_argument('--file', '-f', required=False, type=str, nargs='?', help='Optional file path to take the config from')
 
     args = parser.parse_args()
@@ -208,13 +209,16 @@ def run():
     file_path = args.file or None
     show = args.show
     project_name = args.project.strip('/')
+    profile_name = args.profile
 
     if not show:
         json_contents = load_new_parameters(environment, file_path)
 
     path = '/{}/{}'.format(environment, project_name)
 
-    ssm = boto3.client('ssm')
+    session = boto3.Session(profile_name=profile_name)
+
+    ssm = session.client('ssm')
 
     parameters, parameters_names = retrieve(ssm, path)
     project_found = len(parameters_names) > 0
